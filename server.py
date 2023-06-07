@@ -55,7 +55,7 @@ def main():
     logging.info("Hello, World!")
 
     while True:
-        sec = 120
+        sec = 30
         for tid in db.get_not_started():
             logging.debug(f"Got not-started Timelapse. ID: {tid}")
             db.update_timelapse(tid, 'in_progress')
