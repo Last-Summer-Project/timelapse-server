@@ -34,7 +34,7 @@ jobs:
       with:
         platforms: linux/amd64
         cache-from: |
-          ghcr.io/last-summer-project/detect-server:latest
+          ghcr.io/last-summer-project/timelapse-server:latest
           type=local,src=/tmp/.buildx-cache
         cache-to: mode=max,type=inline
         build-args: BUILD_VER=${{ steps.version.outputs.version }}
@@ -42,6 +42,6 @@ jobs:
         no-cache: ${{ contains(github.event.head_commit.message, '[no cache]') }}
         push: ${{ github.repository_owner == 'Last-Summer-Project' && github.ref == 'refs/heads/master' }}
         tags: |
-          ghcr.io/last-summer-project/detect-server:latest
-          ghcr.io/last-summer-project/detect-server:${{ github.sha }}
-          ghcr.io/last-summer-project/detect-server:${{ steps.version.outputs.version }}
+          ghcr.io/last-summer-project/timelapse-server:latest
+          ghcr.io/last-summer-project/timelapse-server:${{ github.sha }}
+          ghcr.io/last-summer-project/timelapse-server:${{ steps.version.outputs.version }}
