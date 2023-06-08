@@ -7,4 +7,4 @@ RUN apt-get update && \
     unattended-upgrade && \
     python3 -m pip install -r requirements.txt
 
-CMD ["python", "server.py"]
+CMD ["python3", "server.py"]
