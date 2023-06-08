@@ -1,7 +1,6 @@
 import ffmpeg
 import logging
 from pathlib import Path
-import uuid
 
 
 def make_timelapse(out_dir: Path, items: list[str], framerate: int = 60) -> bool:

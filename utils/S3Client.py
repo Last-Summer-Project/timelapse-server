@@ -20,13 +20,13 @@ class S3Client:
         self.session = boto3.session.Session()
         self.client: Client = self.session.client(
             's3',
-            endpoint_url=env.get("S3_ENDPOINT_URL"),
-            aws_access_key_id=env.get("S3_ACCESS_KEY"),
-            aws_secret_access_key=env.get("S3_SECRET_KEY"),
+            endpoint_url=os.getenv("S3_ENDPOINT_URL"),
+            aws_access_key_id=os.getenv("S3_ACCESS_KEY"),
+            aws_secret_access_key=os.getenv("S3_SECRET_KEY"),
             config=boto3.session.Config(signature_version='s3v4'),
-            verify=env.get("S3_VERIFY_TLS")
+            verify=os.getenv("S3_VERIFY_TLS")
         )
-        self.bucket = env.get("S3_BUCKET_NAME")
+        self.bucket = os.getenv("S3_BUCKET_NAME")
 
     def download_file(self, key: str, target_dir: Path) -> bool:
         download_path = target_dir / key

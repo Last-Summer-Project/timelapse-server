@@ -1,6 +1,6 @@
 import mariadb
 import logging
-from dotenv import dotenv_values
+import os
 from typing import Optional
 
 
@@ -8,15 +8,14 @@ class DBConn:
     conn = None
 
     def __init__(self):
-        env: dict = dotenv_values()
         self.conn = mariadb.connect(
-            user=env.get("DB_USER"),
-            password=env.get("DB_PASS"),
-            host=env.get("DB_HOST"),
-            port=int(env.get("DB_PORT")),
-            database=env.get("DB_DATABASE")
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASS"),
+            host=os.getenv("DB_HOST"),
+            port=int(os.getenv("DB_PORT")),
+            database=os.getenv("DB_DATABASE")
         )
-        self.limit = int(env.get("DB_LIMIT", "1"))
+        self.limit = int(os.getenv("DB_LIMIT", "1"))
         logging.info("DB Client is up")
 
     def get_not_started(self,  limit: Optional[int] = None):

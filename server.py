@@ -8,6 +8,9 @@ import tempfile
 import logging
 import sys
 import uuid
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def setup_log():
