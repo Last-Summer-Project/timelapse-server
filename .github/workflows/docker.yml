@@ -1,0 +1,47 @@
+name: Build Docker
+
+on: [push, pull_request]
+
+jobs:
+  docker:
+    name: Docker image test
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Modify scripts and get version
+      id: version
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const date = new Date();
+          const year = date.getUTCFullYear();
+          const month = `${date.getUTCMonth()+1}`.padStart(2, '0');
+          const day = `${date.getUTCDate()}`.padStart(2, '0');
+          const hour = `${date.getUTCHours()}`.padStart(2, '0');
+          const minute = `${date.getUTCMinutes()}`.padStart(2, '0');
+          const d = `${year}-${month}-${day}T${hour}-${minute}`;
+
+          core.setOutput('version', `${d}-${context.sha.substring(0, 7)}`);
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Build a multi-platform docker image and push (for master)
+      uses: docker/build-push-action@v3
+      with:
+        platforms: linux/amd64
+        cache-from: |
+          ghcr.io/last-summer-project/detect-server:latest
+          type=local,src=/tmp/.buildx-cache
+        cache-to: mode=max,type=inline
+        build-args: BUILD_VER=${{ steps.version.outputs.version }}
+        load: false
+        no-cache: ${{ contains(github.event.head_commit.message, '[no cache]') }}
+        push: ${{ github.repository_owner == 'Last-Summer-Project' && github.ref == 'refs/heads/master' }}
+        tags: |
+          ghcr.io/last-summer-project/detect-server:latest
+          ghcr.io/last-summer-project/detect-server:${{ github.sha }}
+          ghcr.io/last-summer-project/detect-server:${{ steps.version.outputs.version }}
