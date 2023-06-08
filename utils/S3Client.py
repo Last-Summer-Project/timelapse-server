@@ -7,6 +7,7 @@ import boto3
 from mypy_boto3_s3 import Client
 import logging
 from dotenv import dotenv_values
+import os
 from concurrent import futures
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
