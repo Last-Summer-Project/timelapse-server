@@ -64,7 +64,7 @@ class S3Client:
                 try:
                     response = requests.get(url, stream=True)
                     response.raise_for_status()  # Raise an exception if the response is not successful
-                    with open(key, 'wb') as file:
+                    with open(target_dir / key, 'wb') as file:
                         for chunk in response.iter_content(chunk_size=8192):
                             if chunk:
                                 file.write(chunk)
