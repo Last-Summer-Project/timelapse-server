@@ -1,15 +1,16 @@
+import concurrent
 import io
 import multiprocessing
 from pathlib import Path
 from typing import Optional
 
 import boto3
+import requests
 from mypy_boto3_s3 import Client
 import logging
 from dotenv import dotenv_values
 import os
-from concurrent import futures
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 
 
 class S3Client:
@@ -19,6 +20,7 @@ class S3Client:
     def __init__(self):
         env: dict = dotenv_values()
         self.session = boto3.session.Session()
+        self.endpoint = os.getenv("S3_ENDPOINT_URL")
         self.client: Client = self.session.client(
             's3',
             endpoint_url=os.getenv("S3_ENDPOINT_URL"),
@@ -51,31 +53,33 @@ class S3Client:
 
     def multi_download_file(self, keys: list[str], target_dir: Path):
         logging.debug(f"Parallel download to '{target_dir}'...")
-        is_result_ok = True
 
-        for key in keys:
-            is_result_ok = is_result_ok and self.download_file(key, target_dir)
-        return is_result_ok
-        # TODO: ThreadPoolExecutor has some error. fix for speed up.
-        # with ThreadPoolExecutor(max_workers=multiprocessing.cpu_count() // 2) as exe:
-        #     futures_to_result = {exe.submit(self.download_file(key, target_dir)): key for key in keys}
-        #     retires = {}
-        #     for future in as_completed(futures_to_result):
-        #         # if exception happened.
-        #         if future.exception():
-        #             # Try Re-try
-        #             data = futures_to_result[future]
-        #             future = exe.submit(self.download_file, data)
-        #             retires[future] = data
-        #             logging.debug(f"Failure, Retrying {data}...")
-        #         else:
-        #             logging.debug(f"Download complete with status: {future.result()}")
-        #
-        #     for future in as_completed(retires):
-        #         if future.exception():
-        #             data = retires[future]
-        #             logging.error(f"Failure on retry: {data}")
-        #             is_result_ok = False
-        #         else:
-        #             logging.debug(f"Download(retry) complete with status: {future.result()}")
-        #     return is_result_ok
+        # TODO: Fix to use boto3... boto3 is not thread-safe.
+        def download_file(key):
+            url = f"{self.endpoint}/{self.bucket}/{key}"
+            retry_attempts = 3  # Number of times to retry the download in case of failure
+
+            while retry_attempts > 0:
+                # noinspection PyBroadException
+                try:
+                    response = requests.get(url, stream=True)
+                    response.raise_for_status()  # Raise an exception if the response is not successful
+                    with open(key, 'wb') as file:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            if chunk:
+                                file.write(chunk)
+                    logging.debug(f'Downloaded: {url}')
+                    return True
+                except Exception as e:
+                    logging.debug(f'Error downloading {url}. Retrying... ({retry_attempts} attempts left) ({e})')
+                    retry_attempts -= 1
+
+            logging.error(f'Failed to download: {url}')
+            return False
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
+            # Submit the download tasks to the executor
+            futures = [executor.submit(download_file, key) for key in keys]
+
+            # Wait for all the download tasks to complete
+            concurrent.futures.wait(futures)
