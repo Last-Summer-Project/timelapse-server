@@ -51,11 +51,11 @@ class S3Client:
             return False
         return True
 
-    def multi_download_file(self, keys: list[str], target_dir: Path):
+    def multi_download_file(self, keys: list[str], target_dir: Path) -> bool:
         logging.debug(f"Parallel download to '{target_dir}'...")
 
         # TODO: Fix to use boto3... boto3 is not thread-safe.
-        def download_file(key):
+        def download_file(key) -> bool:
             url = f"{self.endpoint}/{self.bucket}/{key}"
             retry_attempts = 3  # Number of times to retry the download in case of failure
 
@@ -83,3 +83,5 @@ class S3Client:
 
             # Wait for all the download tasks to complete
             concurrent.futures.wait(futures)
+
+        return all(future.result() for future in futures)
