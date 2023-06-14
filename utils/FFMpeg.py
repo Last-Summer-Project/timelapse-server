@@ -18,7 +18,7 @@ def make_timelapse(out_dir: Path, items: list[str], framerate: int = 60) -> bool
         (
             ffmpeg
             .input(intput_file, format='concat', safe=0)
-            .output(output_file, vcodec='hevc_nvenc', pix_fmt='yuv420p', vf=vf)
+            .output(output_file, vcodec='h264_nvenc', preset="fast", crf=0, pix_fmt='yuv420p', vf=vf)
             .run()
         )
     except Exception as e:
